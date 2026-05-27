@@ -2,7 +2,7 @@ from pathlib import Path
 
 from rest_framework import serializers
 
-from .models import DataSource, Tenant
+from .models import DataSource, NormalizedActivity, Tenant
 
 
 class DataSourceUploadSerializer(serializers.Serializer):
@@ -40,3 +40,43 @@ class DataSourceUploadSerializer(serializers.Serializer):
             filename=Path(uploaded_file.name).name,
             uploaded_by=uploaded_by,
         )
+
+
+class NormalizedActivityListSerializer(serializers.ModelSerializer):
+    source_type = serializers.CharField(source="raw_record.data_source.source_type", read_only=True)
+
+    class Meta:
+        model = NormalizedActivity
+        fields = [
+            "id",
+            "source_type",
+            "activity_type",
+            "scope",
+            "quantity",
+            "unit",
+            "normalized_quantity",
+            "normalized_unit",
+            "review_status",
+            "suspicious",
+            "flag_reason",
+            "created_at",
+        ]
+
+
+class NormalizedActivityEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NormalizedActivity
+        fields = [
+            "quantity",
+            "normalized_quantity",
+            "unit",
+            "normalized_unit",
+            "flag_reason",
+        ]
+        extra_kwargs = {
+            "quantity": {"required": False},
+            "normalized_quantity": {"required": False},
+            "unit": {"required": False},
+            "normalized_unit": {"required": False},
+            "flag_reason": {"required": False},
+        }
