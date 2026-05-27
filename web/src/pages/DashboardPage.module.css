@@ -72,3 +72,165 @@
     font-size: 0.97em;
   }
 }
+
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.actionBtn {
+  padding: 5px 16px;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.97em;
+  font-weight: 600;
+  cursor: pointer;
+  background: #353a42;
+  color: #e5e7eb;
+  transition: background 0.18s, color 0.18s;
+  outline: none;
+}
+.actionBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.approve {
+  background: linear-gradient(90deg, #22c55e 0%, #15803d 100%);
+  color: #fff;
+}
+.approve:disabled {
+  background: #2e4732;
+}
+.reject {
+  background: linear-gradient(90deg, #ef4444 0%, #991b1b 100%);
+  color: #fff;
+}
+.reject:disabled {
+  background: #4b2323;
+}
+.edit {
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
+}
+.edit:disabled {
+  background: #233a5b;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 12px;
+  font-size: 0.93em;
+  font-weight: 700;
+  margin-right: 2px;
+  letter-spacing: 0.01em;
+  vertical-align: middle;
+}
+.approved {
+  background: #22c55e22;
+  color: #22c55e;
+  border: 1px solid #22c55e55;
+}
+.rejected {
+  background: #ef444422;
+  color: #ef4444;
+  border: 1px solid #ef444455;
+}
+.pending {
+  background: #fde04722;
+  color: #fde047;
+  border: 1px solid #fde04755;
+}
+
+.suspiciousRow {
+  border-left: 4px solid #ef4444;
+  background: #2a2323;
+}
+
+/* Edit Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(24,28,32,0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal {
+  background: #23272f;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px 0 rgba(0,0,0,0.18);
+  padding: 32px 28px 24px 28px;
+  min-width: 320px;
+  max-width: 98vw;
+  color: #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.modalTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #fff;
+}
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.modalLabel {
+  font-size: 1em;
+  font-weight: 600;
+  color: #b0b8c1;
+  margin-bottom: 2px;
+}
+.modalInput {
+  padding: 7px 10px;
+  border-radius: 5px;
+  border: 1px solid #353a42;
+  background: #23272f;
+  color: #e5e7eb;
+  font-size: 1em;
+  outline: none;
+  transition: border 0.18s;
+}
+.modalInput:focus {
+  border: 1px solid #3b82f6;
+}
+.modalActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+.modalSave {
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  border-radius: 5px;
+  padding: 7px 22px;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.modalSave:disabled {
+  background: #233a5b;
+  color: #b0b8c1;
+  cursor: not-allowed;
+}
+.modalCancel {
+  background: #353a42;
+  color: #e5e7eb;
+  font-weight: 600;
+  border: none;
+  border-radius: 5px;
+  padding: 7px 22px;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.modalCancel:hover {
+  background: #23272f;
+}
