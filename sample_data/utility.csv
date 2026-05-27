@@ -1,0 +1,4 @@
+Meter ID,Billing Start,Billing End,kWh,Tariff Type,Amount
+MTR001,2026-04-01,2026-04-30,12000,Commercial,45000
+MTR002,2026-05-10,2026-05-01,8500,Commercial,32000
+MTR003,2026-05-01,2026-05-31,-2000,Industrial,50000

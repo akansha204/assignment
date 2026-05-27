@@ -1,0 +1,5 @@
+Document Number,Material Description,Plant Code,Quantity,UOM,Posting Date,Vendor
+1002345,Diesel Fuel,PL001,500,L,2026-05-01,Shell India
+1002346,Diesel Fuel,,300,L,2026-05-03,BPCL
+1002347,Lubricant Oil,PL002,-20,L,2026-05-05,HPCL
+1002348,Natural Gas,PL003,120,m3,2026-13-01,GAIL
