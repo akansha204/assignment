@@ -4,17 +4,21 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import DataSource, RawRecord
+from .models import DataSource, NormalizedActivity, RawRecord
+from .normalizers import normalize_sap_row, normalize_travel_row, normalize_utility_row
 from .parsers.sap_parsers import parse_sap_csv
 from .parsers.travel_parsers import parse_travel_csv
 from .parsers.utility_parsers import parse_utility_csv
 from .serializers import DataSourceUploadSerializer
+from .validators import validate_sap_row, validate_travel_row, validate_utility_row
 
 
 class CSVUploadView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     source_type = None
     parser = None
+    validator = None
+    normalizer = None
 
     def post(self, request, *args, **kwargs):
         serializer = DataSourceUploadSerializer(
@@ -29,23 +33,53 @@ class CSVUploadView(APIView):
         with transaction.atomic():
             data_source = serializer.save()
             csv_rows = self.parser(serializer.validated_data["file"])
-            raw_records = [
-                RawRecord(
+
+            raw_records_created = 0
+            normalized_records_created = 0
+            invalid_records = 0
+            suspicious_records = 0
+
+            for row_number, row in enumerate(csv_rows, start=1):
+                raw_record = RawRecord.objects.create(
                     data_source=data_source,
                     row_number=row_number,
                     payload=row,
                     status=RawRecord.IngestionStatus.PENDING,
                 )
-                for row_number, row in enumerate(csv_rows, start=1)
-            ]
-            RawRecord.objects.bulk_create(raw_records)
+                raw_records_created += 1
+
+                validation_result = self.validator(row)
+                if not validation_result["is_valid"]:
+                    raw_record.status = RawRecord.IngestionStatus.INVALID
+                    raw_record.validation_errors = validation_result["errors"]
+                    raw_record.save(update_fields=["status", "validation_errors", "updated_at"])
+                    invalid_records += 1
+                    continue
+
+                normalized_data = self.normalizer(row)
+                NormalizedActivity.objects.create(
+                    tenant=data_source.tenant,
+                    raw_record=raw_record,
+                    suspicious=validation_result["suspicious"],
+                    flag_reason=validation_result["flag_reason"],
+                    **normalized_data,
+                )
+
+                raw_record.status = RawRecord.IngestionStatus.NORMALIZED
+                raw_record.validation_errors = []
+                raw_record.save(update_fields=["status", "validation_errors", "updated_at"])
+
+                normalized_records_created += 1
+                if validation_result["suspicious"]:
+                    suspicious_records += 1
 
         return Response(
             {
                 "datasource_id": data_source.id,
-                "source_type": data_source.source_type,
-                "filename": data_source.filename,
-                "raw_records_created": len(raw_records),
+                "raw_records_created": raw_records_created,
+                "normalized_records_created": normalized_records_created,
+                "invalid_records": invalid_records,
+                "suspicious_records": suspicious_records,
             },
             status=status.HTTP_201_CREATED,
         )
@@ -54,13 +88,19 @@ class CSVUploadView(APIView):
 class SAPUploadView(CSVUploadView):
     source_type = DataSource.SourceType.SAP
     parser = staticmethod(parse_sap_csv)
+    validator = staticmethod(validate_sap_row)
+    normalizer = staticmethod(normalize_sap_row)
 
 
 class UtilityUploadView(CSVUploadView):
     source_type = DataSource.SourceType.UTILITY
     parser = staticmethod(parse_utility_csv)
+    validator = staticmethod(validate_utility_row)
+    normalizer = staticmethod(normalize_utility_row)
 
 
 class TravelUploadView(CSVUploadView):
     source_type = DataSource.SourceType.TRAVEL
     parser = staticmethod(parse_travel_csv)
+    validator = staticmethod(validate_travel_row)
+    normalizer = staticmethod(normalize_travel_row)
