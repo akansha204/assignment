@@ -15,11 +15,10 @@ class DataSourceUploadSerializer(serializers.Serializer):
         return uploaded_file
 
     def validate(self, attrs):
-        tenant = Tenant.objects.order_by("id").first()
-        if tenant is None:
-            raise serializers.ValidationError(
-                {"tenant": "At least one tenant is required before uploading data."}
-            )
+        tenant, _ = Tenant.objects.get_or_create(
+            slug="demo-enterprise",
+            defaults={"name": "Demo Enterprise"},
+        )
 
         attrs["tenant"] = tenant
         return attrs
