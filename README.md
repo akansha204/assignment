@@ -1,127 +1,77 @@
 # ESG Data Ingestion Prototype
 
-## 1. Project Overview
+A Django + React prototype for ingesting operational sustainability datasets from SAP fuel/procurement exports, utility electricity exports, and corporate travel exports.
 
-This project is a Django + React prototype for ingesting operational sustainability data from multiple enterprise sources. It supports CSV uploads from SAP fuel/procurement exports, utility electricity exports, and corporate travel exports.
-
-The prototype demonstrates an end-to-end ESG data ingestion workflow:
+The system demonstrates the core ESG ingestion workflow:
 
 ```text
 upload -> parsing -> validation -> normalization -> analyst review -> audit workflow
 ```
 
-The system preserves raw uploaded rows, validates source-specific records, normalizes valid rows into a canonical activity model, flags suspicious activity, and supports analyst review actions such as approve, reject, and edit.
+This project is a prototype designed for a 4-day engineering assignment and intentionally prioritizes clarity and workflow completeness over production-scale infrastructure.
 
-## 2. Architecture Overview
+## Architecture and Workflow
 
-The application is split into a Django REST backend and a React frontend.
+The backend exposes Django REST Framework APIs for CSV upload, validation, normalization, analyst review, and audit logging. Uploaded files are parsed into raw records first, then valid rows are transformed into canonical normalized activity records for review.
 
-Backend responsibilities:
+The frontend is a React + Vite application that supports CSV upload and analyst review actions through the backend APIs.
 
-- Accept CSV uploads through source-specific API endpoints.
-- Create upload batch records using `DataSource`.
-- Preserve every original CSV row as a `RawRecord`.
-- Validate records using source-specific validation rules.
-- Normalize valid records into `NormalizedActivity`.
-- Expose analyst review APIs.
-- Record review and edit actions in `AuditLog`.
+High-level flow:
 
-Frontend responsibilities:
+1. Upload a source-specific CSV file.
+2. Create a `DataSource` upload batch.
+3. Preserve each CSV row as a `RawRecord`.
+4. Run source-specific validation.
+5. Normalize valid rows into `NormalizedActivity`.
+6. Flag suspicious records for review.
+7. Approve, reject, or edit activities.
+8. Write review actions to `AuditLog`.
 
-- Provide a browser UI for uploading source files.
-- Display normalized activities for analyst review.
-- Support approve, reject, and edit workflows through API calls.
+## Features
 
-## 3. Ingestion Workflow
+- Multi-source CSV ingestion.
+- Source-specific parsers for SAP, utility, and travel data.
+- Raw record preservation before validation and normalization.
+- Validation and normalization pipelines.
+- Suspicious activity detection.
+- Analyst review workflow.
+- Approve, reject, and edit actions.
+- Audit logs for review and edit actions.
+- Deployed frontend and backend prototype.
 
-1. A user uploads a CSV file through one of the source-specific upload endpoints.
-2. The backend creates or retrieves a default demo tenant.
-3. A `DataSource` record is created for the upload batch.
-4. The relevant parser reads the CSV using `csv.DictReader`.
-5. Each CSV row is stored unchanged as a `RawRecord`.
-6. Each row is validated using source-specific rules.
-7. Invalid rows are marked as `invalid` and store validation errors.
-8. Valid rows are normalized into `NormalizedActivity`.
-9. Suspicious but valid rows are normalized and flagged for analyst review.
-10. Analysts can approve, reject, or edit normalized activity records.
-11. Review actions are captured in audit logs.
+## Project Structure
 
-## 4. Source Types
+```text
+.
+├── core/                 # Django project settings and root URLs
+├── ingestion/            # Ingestion models, APIs, parsers, validators, normalizers
+├── audit/                # Audit app scaffold
+├── sample_data/          # Example SAP, utility, and travel CSV files
+├── web/                  # React + Vite frontend
+├── docs/                 # Engineering documentation
+├── manage.py
+├── requirements.txt
+├── Procfile
+└── README.md
+```
 
-The prototype supports three source types:
-
-- `sap`: SAP fuel and procurement exports.
-- `utility`: Utility electricity billing exports.
-- `travel`: Corporate travel exports.
-
-Each source type has its own upload endpoint, parser, validator, and normalizer.
-
-## 5. Validation & Normalization
-
-Validation is intentionally simple and source-specific.
-
-SAP validation:
-
-- `Plant Code` is required.
-- `Quantity` must be greater than zero.
-- `Posting Date` must be valid.
-- `UOM` is required.
-
-Utility validation:
-
-- `Meter ID` is required.
-- `kWh` must be greater than zero.
-- `Billing End` must be after `Billing Start`.
-
-Travel validation:
-
-- `Traveler Name` is required.
-- `Travel Type` is required.
-- `Origin` is required.
-- `Destination` is required for flights.
-- Missing flight distance does not fail validation, but marks the activity as suspicious.
-
-Normalization maps valid rows into a canonical activity shape with:
-
-- ESG scope.
-- Activity type.
-- Original quantity and unit.
-- Normalized quantity and unit.
-- Review status.
-- Suspicious flag and flag reason where applicable.
-
-## 6. Review Workflow
-
-Normalized activities enter the review workflow with a pending review status.
-
-Analysts can:
-
-- List normalized activities.
-- Approve an activity.
-- Reject an activity.
-- Edit quantity, normalized quantity, unit, normalized unit, or flag reason.
-
-Each approve, reject, or edit action creates an `AuditLog` entry. For prototype simplicity, audit actors may be stored as `null`.
-
-## 7. Tech Stack
+## Tech Stack
 
 Backend:
 
-- Django
 - Django REST Framework
 - SQLite
 - Gunicorn
 
 Frontend:
 
-- React
-- Vite
+- React + Vite
 - Zustand
 - Axios
 
-## 8. Local Development Setup
+## Local Development
 
-Backend setup:
+Backend:
 
 ```bash
 python3 -m venv venv
@@ -131,7 +81,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Frontend setup:
+Frontend:
 
 ```bash
 cd web
@@ -139,40 +89,19 @@ npm install
 npm run dev
 ```
 
-By default, the Django API runs on:
+Default local URLs:
 
-```text
-http://localhost:8000
-```
+- Backend API: `http://localhost:8000`
+- Frontend: `http://localhost:5173`
 
-The Vite frontend typically runs on:
+## API Summary
 
-```text
-http://localhost:5173
-```
-
-## 9. API Endpoints
-
-Upload endpoints:
+CSV upload endpoints:
 
 ```http
 POST /api/upload/sap
 POST /api/upload/utility
 POST /api/upload/travel
-```
-
-Each upload endpoint accepts a multipart CSV file using the `file` field.
-
-Example response:
-
-```json
-{
-  "datasource_id": 1,
-  "raw_records_created": 10,
-  "normalized_records_created": 8,
-  "invalid_records": 2,
-  "suspicious_records": 1
-}
 ```
 
 Activity review endpoints:
@@ -184,23 +113,11 @@ PATCH /api/activities/<id>/reject
 PATCH /api/activities/<id>/edit
 ```
 
-Editable fields for activity edit:
+Upload endpoints accept multipart form data with a `file` field containing a CSV file.
 
-```json
-{
-  "quantity": "100.000000",
-  "normalized_quantity": "100.000000",
-  "unit": "L",
-  "normalized_unit": "liters",
-  "flag_reason": "Updated during analyst review"
-}
-```
+## Deployment
 
-## 10. Deployment
-
-The backend is configured for Gunicorn-based deployment using the included `Procfile`.
-
-Typical deployment command:
+The backend is configured for lightweight Gunicorn deployment using the included `Procfile`.
 
 ```bash
 gunicorn core.wsgi
@@ -213,31 +130,13 @@ cd web
 npm run build
 ```
 
-Deployment currently assumes a prototype environment. Production deployment would require additional hardening around environment variables, static file hosting, database configuration, authentication, authorization, logging, and monitoring.
+The deployment approach is intentionally lightweight for prototype evaluation. A production version would require stronger environment configuration, authentication, authorization, persistent storage, production database infrastructure, logging, monitoring, and background processing.
 
-## 11. Tradeoffs & Assumptions
+## Engineering Documentation
 
-- SQLite is used for prototype simplicity.
-- A default demo tenant is automatically created for uploads.
-- Authentication and tenant isolation are not fully implemented.
-- CSV schemas are assumed to match the sample source files.
-- Validation rules are intentionally minimal and source-specific.
-- Normalization does not calculate emissions factors or CO2e values.
-- Suspicious activity detection is limited to simple rule-based checks.
-- Audit actors may be `null` in the current prototype.
-- The system is designed to demonstrate ingestion architecture, not full production readiness.
+Detailed engineering notes are available in `/docs`:
 
-## 12. Future Improvements
-
-- Add authentication and role-based authorization.
-- Implement real tenant selection and tenant-scoped access control.
-- Move from SQLite to PostgreSQL.
-- Add emissions factor mapping and CO2e calculations.
-- Add richer validation with configurable source schemas.
-- Add duplicate detection and idempotent re-ingestion.
-- Add file storage for original uploaded CSV files.
-- Add pagination, filtering, and search for activity review.
-- Add detailed audit views in the frontend.
-- Add automated tests for parsers, validators, normalizers, and review APIs.
-- Add background processing for large uploads.
-- Add deployment-grade logging, metrics, and error tracking.
+- [DECISIONS.md](./docs/DECISIONS.md): Major implementation decisions and rationale.
+- [TRADEOFFS.md](./docs/TRADEOFFS.md): Prototype limitations and intentionally deferred production concerns.
+- [MODEL.md](./docs/MODEL.md): Backend data model and ingestion lifecycle.
+- [SOURCES.md](./docs/SOURCES.md): Source data assumptions and research notes.
