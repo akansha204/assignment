@@ -12,6 +12,8 @@ This project is a prototype designed for a 4-day engineering assignment and inte
 
 ## Architecture and Workflow
 
+![Architecture diagram](./docs/assets/architecture-diagram.png)
+
 The backend exposes Django REST Framework APIs for CSV upload, validation, normalization, analyst review, and audit logging. Uploaded files are parsed into raw records first, then valid rows are transformed into canonical normalized activity records for review.
 
 The frontend is a React + Vite application that supports CSV upload and analyst review actions through the backend APIs.
